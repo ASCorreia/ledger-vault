@@ -28,6 +28,12 @@ pub struct Withdraw<'info> {
 impl<'info> Withdraw<'info> {
     pub fn withdraw(&mut self) -> Result<()> {
 
+        // Empty the vault back to the user (Cpi context needs signer seeds as it is being transferred out of a PDA)
+
+        // Close the vault state (tip, seacrh for a close macro)
+
+        // Close the vault ata (tip, look at line 7)
+
         // let seeds = &[
         //     b"vault",
         //     self.user.to_account_info().key.as_ref(),
@@ -36,6 +42,7 @@ impl<'info> Withdraw<'info> {
         // ];
 
         // let signer_seeds = &[&seeds[..]];
+
 
         Ok(())
     }

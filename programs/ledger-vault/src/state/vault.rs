@@ -4,6 +4,8 @@ use anchor_lang::prelude::*;
 pub struct Vault {
     pub vault_bump: u8,
 }
+
 impl Space for Vault {
     const INIT_SPACE: usize = 8 + 1;
 }
+

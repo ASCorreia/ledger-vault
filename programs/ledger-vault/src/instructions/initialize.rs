@@ -24,15 +24,15 @@ pub struct Initialize<'info> {
     )]
     pub vault: Account<'info, TokenAccount>,
     pub system_program: Program<'info, System>,
-    pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
+    pub token_program: Program<'info, Token>,
 }
 
 impl<'info> Initialize<'info> {
     pub fn initialize(&mut self, bumps: InitializeBumps) -> Result<()> {
 
-        self.vault_state.set_inner(Vault { vault_bump:bumps.vault_state });
-        
+        self.vault_state.vault_bump = bumps.vault_state;
+
         Ok(())
     }
 }
