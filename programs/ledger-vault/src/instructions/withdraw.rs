@@ -1,12 +1,6 @@
+#![allow(unexpected_cfgs)]
 use anchor_lang::prelude::*;
-use anchor_spl::token::{
-    Mint, 
-    Token, 
-    TokenAccount,
-    Transfer,
-    CloseAccount,
-    close_account,
-};
+use anchor_spl::token::{Mint, Token, TokenAccount, CloseAccount, close_account};
 
 use crate::state::Vault;
 
@@ -20,6 +14,13 @@ pub struct Withdraw<'info> {
     pub user_ata: Account<'info, TokenAccount>,
     #[account(
         mut,
+        associated_token::mint = mint,
+        associated_token::authority = vault_state,
+    )]
+    pub vault: Account<'info, TokenAccount>,
+    #[account(
+        mut,
+        close = vault_state,
     )]
     pub vault_state: Account<'info, Vault>,
     pub token_program: Program<'info, Token>,
@@ -28,21 +29,26 @@ pub struct Withdraw<'info> {
 impl<'info> Withdraw<'info> {
     pub fn withdraw(&mut self) -> Result<()> {
 
-        // Empty the vault back to the user (Cpi context needs signer seeds as it is being transferred out of a PDA)
+        let cpi_program = self.token_program.to_account_info();
 
-        // Close the vault state (tip, seacrh for a close macro)
+        let cpi_accounts = CloseAccount {
+            account: self.vault.to_account_info(),
+            destination: self.user_ata.to_account_info(),
+            authority: self.vault_state.to_account_info(),
+        };
 
-        // Close the vault ata (tip, look at line 7)
+        let seeds = &[
+            b"vault",
+            self.user.to_account_info().key.as_ref(),
+            self.mint.to_account_info().key.as_ref(),
+            &[self.vault_state.vault_bump],
+        ];
 
-        // let seeds = &[
-        //     b"vault",
-        //     self.user.to_account_info().key.as_ref(),
-        //     self.mint.to_account_info().key.as_ref(),
-        //     &[self.vault_state.vault_bump],
-        // ];
+        let signer_seeds = &[&seeds[..]];
 
-        // let signer_seeds = &[&seeds[..]];
+        let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
+        close_account(cpi_context)?;
 
         Ok(())
     }
