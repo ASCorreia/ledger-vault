@@ -10,6 +10,12 @@ import {
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 import { LedgerVault } from "../target/types/ledger_vault";
 import { SYSTEM_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/native/system";
+import * as chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+
+chai.use(chaiAsPromised);
+
+const expect = chai.expect;
 
 describe("ledger-vault", () => {
   // Configure the client to use the local cluster.
@@ -91,8 +97,8 @@ describe("ledger-vault", () => {
 
   it("Deposits tokens into the vault", async () => {
 
-    let initalBalance = await provider.connection.getTokenAccountBalance(vault);
-    console.log("\nVault balance before deposit:", initalBalance.value.amount);
+    let initialBalance = await provider.connection.getTokenAccountBalance(vault);
+    console.log("\nVault balance before deposit:", initialBalance.value.amount);
 
     const tx = await program.methods.deposit(new anchor.BN(10000000)) // Deposit 10 tokens
       .accountsPartial({
@@ -107,5 +113,42 @@ describe("ledger-vault", () => {
     
     let finalBalance = await provider.connection.getTokenAccountBalance(vault);
     console.log("\nVault balance after deposit:", finalBalance.value.amount);
+
+    let ATA = await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        payer.payer,
+        mint,
+        payer.publicKey
+    );
+    userATA = ATA.address;
+
+    let finalATABalance = await provider.connection.getTokenAccountBalance(userATA);
+    console.log("\nuserATA balance after deposit:", finalATABalance.value.amount);
+  });
+
+  it("Withdraws tokens from the vault", async () => {
+
+    let userBalanceBefore = await provider.connection.getTokenAccountBalance(userATA);
+    console.log("\nUser ATA balance before withdrawal:", userBalanceBefore.value.amount);
+    expect(userBalanceBefore.value.amount).to.eq("90000000");
+
+    const tx = await program.methods.withdraw()
+        .accountsPartial({
+          user: provider.publicKey,
+          mint: mint,
+          userAta: userATA,
+          vault: vault,
+          vaultState: vaultState,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+    console.log("\nWithdrawal transaction signature", tx);
+
+    let userBalanceAfter = await provider.connection.getTokenAccountBalance(userATA);
+    console.log("\nUser ATA balance after withdrawal:", userBalanceAfter.value.amount);
+    expect(userBalanceAfter.value.amount).to.eq("100000000");
+
+    expect(program.account.vault.fetch(vault)).to.be.rejectedWith("test");
+    expect(program.account.vault.fetch(vaultState)).to.be.rejectedWith("test");
   });
 });

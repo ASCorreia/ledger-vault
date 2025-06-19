@@ -1,26 +1,26 @@
 #![allow(unexpected_cfgs)]
-use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token, TokenAccount, CloseAccount, close_account};
-
 use crate::state::Vault;
+use anchor_lang::prelude::*;
+use anchor_spl::token::{
+    close_account, transfer, CloseAccount, Mint, Token, TokenAccount, Transfer,
+};
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
     pub user: Signer<'info>,
     pub mint: Account<'info, Mint>,
-    #[account(
-        mut
-    )]
+    #[account(mut)]
     pub user_ata: Account<'info, TokenAccount>,
     #[account(
         mut,
+        close = user_ata,
         associated_token::mint = mint,
         associated_token::authority = vault_state,
     )]
     pub vault: Account<'info, TokenAccount>,
     #[account(
         mut,
-        close = vault_state,
+        close = user,
     )]
     pub vault_state: Account<'info, Vault>,
     pub token_program: Program<'info, Token>,
@@ -28,15 +28,6 @@ pub struct Withdraw<'info> {
 
 impl<'info> Withdraw<'info> {
     pub fn withdraw(&mut self) -> Result<()> {
-
-        let cpi_program = self.token_program.to_account_info();
-
-        let cpi_accounts = CloseAccount {
-            account: self.vault.to_account_info(),
-            destination: self.user_ata.to_account_info(),
-            authority: self.vault_state.to_account_info(),
-        };
-
         let seeds = &[
             b"vault",
             self.user.to_account_info().key.as_ref(),
@@ -46,16 +37,33 @@ impl<'info> Withdraw<'info> {
 
         let signer_seeds = &[&seeds[..]];
 
-        let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
+        transfer(
+            CpiContext::new_with_signer(
+                self.token_program.to_account_info(),
+                Transfer {
+                    from: self.vault.to_account_info(),
+                    to: self.user_ata.to_account_info(),
+                    authority: self.vault_state.to_account_info(),
+                },
+                signer_seeds,
+            ),
+            self.vault.amount,
+        )?;
 
-        close_account(cpi_context)?;
+        close_account(CpiContext::new_with_signer(
+            self.token_program.to_account_info(),
+            CloseAccount {
+                account: self.vault.to_account_info(),
+                destination: self.user_ata.to_account_info(),
+                authority: self.vault_state.to_account_info(),
+            },
+            signer_seeds,
+        ))?;
 
         Ok(())
     }
 
     pub fn close_vault(&mut self) -> Result<()> {
-
-
         Ok(())
     }
 }
