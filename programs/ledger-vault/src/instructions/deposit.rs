@@ -43,6 +43,7 @@ impl<'info> Deposit<'info> {
         transfer(cpi_context, amount)?;
 
         // Extra challenge: Add a counter that keeps track of everytime that the user performs a deposit
+        self.vault_state.counter += 1;
 
         Ok(())
     }

@@ -32,6 +32,7 @@ impl<'info> Initialize<'info> {
     pub fn initialize(&mut self, bumps: InitializeBumps) -> Result<()> {
 
         self.vault_state.vault_bump = bumps.vault_state;
+        self.vault_state.counter = 0;
 
         Ok(())
     }

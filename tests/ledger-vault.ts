@@ -108,4 +108,23 @@ describe("ledger-vault", () => {
     let finalBalance = await provider.connection.getTokenAccountBalance(vault);
     console.log("\nVault balance after deposit:", finalBalance.value.amount);
   });
+
+  it("Withdraws tokens from the vault", async () => {
+    let initialVaultBalance = await provider.connection.getTokenAccountBalance(vault);
+    console.log("\nVault balance before withdrawal:", initialVaultBalance.value.amount);
+
+    const tx = await program.methods.withdraw()
+      .accountsPartial({
+        user: provider.publicKey,
+        mint,
+        vaultState,
+        vault,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .rpc();
+    console.log("\nWithdrawal transaction signature", tx);
+
+    let finalVaultBalance = await provider.connection.getTokenAccountBalance(vault);
+    console.log("\nVault balance after withdrawal:", finalVaultBalance.value.amount);
+  });
 });
