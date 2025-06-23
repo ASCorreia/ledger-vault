@@ -20,8 +20,7 @@ pub mod ledger_vault {
     }
 
     pub fn withdraw(ctx: Context<Withdraw>) -> Result<()> {
-        ctx.accounts.withdraw()
+        ctx.accounts.withdraw();
+        ctx.accounts.close_vault()
     }
-
 }
-
