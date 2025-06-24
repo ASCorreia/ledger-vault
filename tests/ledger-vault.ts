@@ -124,7 +124,11 @@ describe("ledger-vault", () => {
       .rpc();
     console.log("\nWithdrawal transaction signature", tx);
 
-    let finalVaultBalance = await provider.connection.getTokenAccountBalance(vault);
-    console.log("\nVault balance after withdrawal:", finalVaultBalance.value.amount);
+    try {
+      let finalVaultBalance = await provider.connection.getTokenAccountBalance(vault);
+      console.log("\nVault balance after withdrawal:", finalVaultBalance.value.amount);
+    } catch (error) {
+      console.error(error.message);
+    }
   });
 });

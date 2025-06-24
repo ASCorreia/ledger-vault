@@ -66,6 +66,14 @@ impl<'info> Withdraw<'info> {
 
     pub fn close_vault(&mut self) -> Result<()> {
 
+        let seeds = &[
+            b"vault",
+            self.user.to_account_info().key.as_ref(),
+            self.mint.to_account_info().key.as_ref(),
+            &[self.vault_state.vault_bump],
+        ];
+
+        let signer_seeds = &[&seeds[..]];
         let cpi_program = self.token_program.to_account_info();
 
         let cpi_accounts = CloseAccount {
@@ -74,7 +82,7 @@ impl<'info> Withdraw<'info> {
             authority: self.vault_state.to_account_info(),
         };
 
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
         close_account(cpi_ctx)?;
 

@@ -16,11 +16,14 @@ pub mod ledger_vault {
     }
 
     pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
-        ctx.accounts.deposit(amount)
+        ctx.accounts.deposit(amount)?;
+        ctx.accounts.realloc()?;
+        ctx.accounts.update_state(amount)
     }
 
     pub fn withdraw(ctx: Context<Withdraw>) -> Result<()> {
-        ctx.accounts.withdraw()
+        ctx.accounts.withdraw()?;
+        ctx.accounts.close_vault()
     }
 
 }

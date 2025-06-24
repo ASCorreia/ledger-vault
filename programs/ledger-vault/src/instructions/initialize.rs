@@ -33,6 +33,7 @@ impl<'info> Initialize<'info> {
 
         self.vault_state.vault_bump = bumps.vault_state;
         self.vault_state.counter = 0;
+        self.vault_state.user_info = vec![];
 
         Ok(())
     }
